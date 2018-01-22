@@ -72,4 +72,13 @@ public class Message {
 
         this.headerBuf = ByteBuffer.allocate(2*Integer.BYTES);
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "message='" + message + '\'' +
+                ", type=" + type +
+                ", idFrom=" + idFrom +
+                '}';
+    }
 }

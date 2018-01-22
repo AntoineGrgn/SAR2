@@ -2,19 +2,26 @@ package Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class User {
 
+    private ArrayBlockingQueue<Message> messages;
     private SocketChannel channel;
+    private Selector writeSelector;
     private String userName;
     private Integer nameLength;
     private Integer userId;
 
     private Message currentMessage;
+    private ByteBuffer currentBuffer;
 
     private UsersList usersMap;
     private Map<String, ChatRoom> rooms;
@@ -23,9 +30,12 @@ public class User {
 
 
 
-    protected User(SocketChannel chan) {
+    protected User(SocketChannel chan, Selector selector) {
         this.channel = chan;
         this.currentMessage = new Message();
+        this.messages = new ArrayBlockingQueue(20);
+        this.currentBuffer = ByteBuffer.allocate(0);
+        this.writeSelector = selector;
     }
 
     protected SocketChannel getSocketChannel() {
@@ -115,6 +125,7 @@ public class User {
         MessageType t = m.getType();
         switch (t) {
             case MESSAGE:
+                System.out.println("Message reçu, broadcasting");
                 broadcastMessage(m);
                 break;
             case PSEUDO:
@@ -128,7 +139,7 @@ public class User {
                     this.usersMap.removeClient(this);
                     rooms.get(room).addUser(this);
                 } else {
-                    sendMessage(new Message(MessageType.ERROR, "Room inexistante", userId), this);
+                    addMessageToQueue(new Message(MessageType.ERROR, "Room inexistante", userId));
                 }
                 break;
             case CREATE:
@@ -139,7 +150,7 @@ public class User {
                     this.usersMap.removeClient(this);
                     chatRoom.addUser(this);
                 } else {
-                    sendMessage(new Message(MessageType.ERROR, "Room déjà existante", userId), this);
+                    addMessageToQueue(new Message(MessageType.ERROR, "Room déjà existante", userId));
                 }
             case DELETE:
 
@@ -154,11 +165,8 @@ public class User {
 
     private void broadcastMessage(Message message) {
         this.usersMap.usersMap.forEach((Integer k, User v) -> {
-            try {
-                sendMessage(message, v);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            v.addMessageToQueue(message);
+            System.out.println(message.toString());
         });
     }
 
@@ -166,13 +174,60 @@ public class User {
         //TODO : sendUsersList
     }
 
-    private void sendMessage(Message message, User user) throws IOException {
+    private void addMessageToQueue(Message m) {
+        try {
+            messages.add(m);
+            System.out.println("queue size : " + messages.size());
+            SelectionKey key = this.channel.register(this.writeSelector, SelectionKey.OP_WRITE);
+            key.attach(this);
+        } catch (IllegalStateException e) {
+            System.err.println("File d'attente saturée - Message non traité");
+            //TODO : informer le client ?
+        } catch (ClosedChannelException e) {
+            System.err.println("Envoi du message impossible - client déconnecté");
+            usersMap.removeClient(this);
+        }
+    }
+
+    protected void sendMessages() {
+        if (currentBuffer.hasRemaining()) {
+            try {
+                sendRemaining();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+
+            Message m = messages.poll();
+            System.out.println("queue size : " + messages.size());
+            if (m!=null) {
+                try {
+                    System.out.println(m.toString());
+                    sendMessage(m);
+                } catch (IOException e) {
+                    //TODO : gérer l'exception
+                    e.printStackTrace();
+                }
+            } else {
+                System.err.println("Appel de sendMessage sur une file vide");
+            }
+            if (messages.isEmpty()) channel.keyFor(writeSelector).cancel();
+        }
+
+    }
+
+    private void sendRemaining() throws IOException {
+        System.out.println("has remaining");
+        channel.write(currentBuffer);
+    }
+
+    private void sendMessage(Message message) throws IOException {
+        System.out.println("vvvvvvvvvv");
+        //TODO : write
         ByteBuffer buf = message.messageToByteBuffer();
         System.out.println("send message : " + buf.toString());
-        SocketChannel channel = user.getSocketChannel();
-        while (buf.hasRemaining()) {
-            channel.write(buf);
-        }
+        channel.write(buf);
+        if (buf.hasRemaining()) this.currentBuffer = buf;
     }
 
     @Override

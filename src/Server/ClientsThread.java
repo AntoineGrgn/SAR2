@@ -16,7 +16,6 @@ public class ClientsThread implements Runnable {
 
     private BlockingQueue<User> connexionQueue;
 
-    private Selector writeSelector;
     private Selector readSelector;
 
     private Map<String, ChatRoom> rooms;
@@ -26,11 +25,11 @@ public class ClientsThread implements Runnable {
     private Charset charSet = Charset.forName("UTF-8");
 
 
-    public ClientsThread(BlockingQueue<User> queue) throws IOException {
+    public ClientsThread(BlockingQueue<User> queue, UsersList usersMap) throws IOException {
         this.connexionQueue = queue;
         this.readSelector = Selector.open();
         this.rooms = new HashMap<>();
-        this.usersMap = new UsersList();
+        this.usersMap = usersMap;
         this.rooms.put("default", new ChatRoom("default", usersMap));
         this.rooms.put("chatroom1", new ChatRoom("chatroom1"));
         this.rooms.put("chatroom2", new ChatRoom("chatroom2"));
