@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <title>TP SAR 2</title>
+  </head>
+  <body>
+    <h1 style="text-align: center;"><strong>Practical Project 2</strong></h1>
+    <p>Overall, the practical project is to experiment with implementing the
+      programming model of distributed systems, based on processes executing
+      events and exchanging messages. The goal of this project is to implement a
+      chat server and a chat client. In a first step, we impement the chat using
+      NIO.</p>
+    <h2><strong>Background</strong></h2>
+    <p>Read carefully this NIO Turotial :
+      http://tutorials.jenkov.com/java-nio/index.html</p>
+    <h2>Step 1. A simple Chat Client and Server</h2>
+    <p>This part is about using NIO sockets, an asynchronous framework for
+      communications to implement a simple chat client and server. This will
+      correspond to an&nbsp; implementation of a broadcast service, in a
+      client-server architecture. <br>
+      <br>
+      The chat server keep track of the list of connected clients and broadcast
+      any message sent by a client to every client connected to the server.<br>
+      <br>
+      On the client side, once a client is connected to the chat server, it can:<br>
+      - disconnect it self from the server<br>
+      - send a message to all other clients connected to the server<br>
+      - list all the clients connected to the server<br>
+      - receive all message send by other clients.<br>
+      <br>
+      The best way, is to separate clearly the different part of the distributed
+      system through separate interfaces, callback and implementation :<br>
+      - the user interface (i.e. chat commande line or GUI)<br>
+      - the messaging service (sending/receiving/broadcasting messages) </p>
+    <h2><strong>Step 2. Chat Room</strong></h2>
+    <p>The step 2 is about implementing chat room.<br>
+      Once connected, a client can list a set of chat room and enter/leave a
+      chat room.<br>
+      In a first step, we consider a fixed step of existing chat room that are
+      created when the chat server starts.<br>
+      When a client is inside a chat room, it receive all message sent inside
+      this chat room and a message sent by this client will be received by all
+      the other client in the chat room. When a client leave a chat room, it
+      will no longer receive message exchanged inside this room.<br>
+      In a second step, a client can create/destroy a chat room, Only a client
+      that has created a chat room can destroy it.</p>
+  
+
+</body></html>

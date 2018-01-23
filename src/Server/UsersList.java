@@ -19,7 +19,7 @@ public class UsersList {
     }
 
     protected void removeClient(User user) {
-        System.out.println(user);
+        System.out.println("Removing : " + user);
         System.out.println(this.usersMap.remove(user.getUserId(), user));
     }
 

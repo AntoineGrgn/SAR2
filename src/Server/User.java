@@ -77,7 +77,6 @@ public class User {
         if (currentMessage.headerBuf.remaining() != 0) {
             channel.read(currentMessage.headerBuf);
             if (currentMessage.headerBuf.remaining() != 0) return;
-            System.out.println(currentMessage.headerBuf);
             currentMessage.setHeader(userId);
             currentMessage.messageBuf = ByteBuffer.allocate(currentMessage.getMessageLength());
         }
@@ -177,9 +176,11 @@ public class User {
     private void addMessageToQueue(Message m) {
         try {
             messages.add(m);
-            System.out.println("queue size : " + messages.size());
+            System.out.println("addMessage queue size : " + messages.size());
+            System.out.println("addMessages messages.peek() : " + messages.peek());
             SelectionKey key = this.channel.register(this.writeSelector, SelectionKey.OP_WRITE);
             key.attach(this);
+            System.out.println("write selector registered");
         } catch (IllegalStateException e) {
             System.err.println("File d'attente saturée - Message non traité");
             //TODO : informer le client ?
@@ -197,10 +198,10 @@ public class User {
                 e.printStackTrace();
             }
         } else {
-
-            Message m = messages.poll();
-            System.out.println("queue size : " + messages.size());
-            if (m!=null) {
+            System.out.println("sendMessages queue size : " + messages.size());
+            System.out.println("sendMessages messages.peek() : " + messages.peek());
+            Message m = messages.remove();
+            if (!m.equals(null)) {
                 try {
                     System.out.println(m.toString());
                     sendMessage(m);
@@ -211,9 +212,11 @@ public class User {
             } else {
                 System.err.println("Appel de sendMessage sur une file vide");
             }
-            if (messages.isEmpty()) channel.keyFor(writeSelector).cancel();
+            if (messages.isEmpty()) {
+                System.out.println("removing selector");
+                channel.keyFor(writeSelector).cancel();
+            }
         }
-
     }
 
     private void sendRemaining() throws IOException {
@@ -222,8 +225,8 @@ public class User {
     }
 
     private void sendMessage(Message message) throws IOException {
-        System.out.println("vvvvvvvvvv");
         //TODO : write
+        System.out.println("début send Message");
         ByteBuffer buf = message.messageToByteBuffer();
         System.out.println("send message : " + buf.toString());
         channel.write(buf);

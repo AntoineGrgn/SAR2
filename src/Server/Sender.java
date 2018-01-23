@@ -25,13 +25,8 @@ public class Sender implements Runnable {
                 e.printStackTrace();
             }
 
-            try {
-                Thread.sleep(1000);
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
+
     }
 
     private void readUsersMessages() throws IOException {
@@ -39,11 +34,18 @@ public class Sender implements Runnable {
         int messages = this.writeSelector.selectNow();
 
         if (messages > 0) {
+            try {
+                Thread.sleep(1000);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             //TODO : ajouter le sélecteur WRITE sur la socket
             Set<SelectionKey> selectedKeys = this.writeSelector.selectedKeys();
             Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
 
             while(keyIterator.hasNext()) {
+                System.out.println("boucle while sender");
                 SelectionKey key = keyIterator.next();
                 User user = (User) key.attachment();
                 user.sendMessages();
