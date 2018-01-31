@@ -158,7 +158,7 @@ public class User {
                     rooms.remove(this.room);
                 break;
             case USERLIST:
-                //TODO userlist
+                addMessageToQueue(new Message(this.usersMap));
                 break;
             case CHATROOMLIST:
                 //TODO chatroomlist
@@ -173,7 +173,7 @@ public class User {
             this.usersMap.removeClient(this);
             rooms.get(room).addUser(this);
             this.room = room;
-            //TODO : send new users list
+            addMessageToQueue(new Message(this.usersMap));
         } else {
             addMessageToQueue(new Message(MessageType.ERROR, "Room inexistante", userId));
         }

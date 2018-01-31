@@ -59,6 +59,10 @@ public class Connexion {
 
         System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);
 
+
+//        switch (type) {
+//            case
+//        }
         //handleMessage(new Message(MessageType.fromInt(type), ))
 
     }

@@ -3,6 +3,8 @@ package Server;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Message {
 
@@ -21,6 +23,18 @@ public class Message {
         this.message = m;
         this.idFrom = id;
         this.type = t;
+        this.messageLength = message.length();
+    }
+
+    public Message(UsersList list) {
+        this.type = MessageType.USERLIST;
+        this.idFrom = 0;
+        String message = new String();
+        for (Map.Entry<Integer, User> entry : list.usersMap.entrySet()) {
+            Integer id = entry.getKey();
+            User user = entry.getValue();
+            message += id + user.getNameLength() + user.getUserName();
+        }
         this.messageLength = message.length();
     }
 

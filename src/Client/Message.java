@@ -8,12 +8,12 @@ public class Message {
     private Charset charSet = Charset.forName("UTF-8");
     private String message;
     private MessageType type;
-    private String strFrom;
+    private int idFrom;
     private int length;
 
-    public Message(MessageType type, String message, String pseudoFrom) {
+    public Message(MessageType type, String message, int id) {
         this.message = message;
-        this.strFrom = pseudoFrom;
+        this.idFrom = id;
         this.type = type;
         this.length = message.length();
     }
@@ -26,10 +26,6 @@ public class Message {
 
     protected String getMessage() {
         return this.message;
-    }
-
-    protected String getStrFrom() {
-        return this.strFrom;
     }
 
     protected MessageType getType() {
@@ -45,4 +41,5 @@ public class Message {
         //System.out.println(buf);
         return(buf);
     }
+
 }
