@@ -33,8 +33,10 @@ public class Message {
         for (Map.Entry<Integer, User> entry : list.usersMap.entrySet()) {
             Integer id = entry.getKey();
             User user = entry.getValue();
-            message += id + user.getNameLength() + user.getUserName();
+            message += id.toString() + user.getNameLength().toString() + user.getUserName();
+            System.out.println("id : " + id + " length : " + user.getNameLength() + " name : " + user.getUserName());
         }
+        this.message = message;
         this.messageLength = message.length();
     }
 

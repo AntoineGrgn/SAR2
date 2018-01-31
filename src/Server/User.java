@@ -199,7 +199,6 @@ public class User {
             messages.add(m);
             System.out.println("addMessage messages : " + messages);
             System.out.println("addMessage queue size : " + messages.size());
-            System.out.println("addMessages messages.peek() : " + messages.peek());
             SelectionKey key = this.channel.register(this.writeSelector, SelectionKey.OP_WRITE);
             key.attach(this);
             System.out.println("write selector registered");
@@ -210,7 +209,6 @@ public class User {
             System.err.println("Envoi du message impossible - client déconnecté");
             usersMap.removeClient(this);
         }
-        System.out.println("add messages : " + this.getMessages());
     }
 
     protected void sendMessages() {
@@ -222,7 +220,6 @@ public class User {
             }
         } else {
             System.out.println("sendMessages queue size : " + messages.size());
-            System.out.println("sendMessages messages.peek() : " + messages.peek());
             System.out.println("sendMessage messages : " + messages);
             Message m = null;
             try {
@@ -230,10 +227,8 @@ public class User {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("sendMessage messages : " + messages);
             if (!m.equals(null)) {
                 try {
-                    System.out.println(m.toString());
                     sendMessage(m);
                 } catch (IOException e) {
                     //TODO : gérer l'exception

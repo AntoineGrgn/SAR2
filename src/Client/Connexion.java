@@ -66,7 +66,7 @@ public class Connexion {
             case USERLIST:
                 break;
         }
-        //System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);
+        System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);
 
 
 //        switch (type) {
