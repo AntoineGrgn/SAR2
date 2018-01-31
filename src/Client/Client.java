@@ -18,18 +18,29 @@ public class Client {
 
         System.out.print("Choisissez votre pseudo : ");
         String pseudo = scan.nextLine();
-        //TODO : vérification sur l'input
+        while(pseudo.length()<1){
+            System.out.print("Choisissez votre pseudo : ");
+            pseudo = scan.nextLine();
+        }
+        System.out.println("Votre pseudo est: " + pseudo);
+        System.out.println("Vous êtes dans la chatroom par défaut");
         connexion.sendMessage(new Message(MessageType.PSEUDO, pseudo));
 
         while (true) {
             if (scan.hasNextLine()) {
                 String input = scan.nextLine();
-                //TODO : vérification sur l'input
-                if (input.equals("chatroom1")) {
-                    connexion.sendMessage(new Message(MessageType.JOIN, input));
-                } else if (input.equals("chatroom2")) {
-                    connexion.sendMessage(new Message(MessageType.JOIN, input));
-                } else {
+                if (input.startsWith("join")) {
+                    connexion.sendMessage(new Message(MessageType.JOIN, input.substring(5)));
+                } else if (input.startsWith("create")) {
+                    connexion.sendMessage(new Message(MessageType.CREATE, input.substring(7)));
+                } else if (input.startsWith("delete")) {
+                    connexion.sendMessage(new Message(MessageType.DELETE, input.substring(7)));
+                } else if (input.startsWith("listRooms")) {
+                    connexion.sendMessage(new Message(MessageType.CHATROOMLIST,""));
+                } else if (input.startsWith("listUsers")) {
+                    connexion.sendMessage(new Message(MessageType.USERLIST, ""));
+                }
+                else {
                     Message message = new Message(MessageType.MESSAGE, input);
                     connexion.sendMessage(message);
                 }
