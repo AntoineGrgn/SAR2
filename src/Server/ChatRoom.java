@@ -32,8 +32,16 @@ public class ChatRoom {
     }
 
     protected boolean deleteRoom(User user) {
-        if (this.owner != null)
-            return this.owner.equals(user);
+        if (this.owner != null) {
+            if (this.owner.equals(user)) {
+                this.usersMap.usersMap.forEach((Integer k, User v) -> {
+                    v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
+                    v.changeRoom("default");
+                });
+                return true;
+            }
+        }
+        user.addMessageToQueue(new Message(MessageType.ERROR, "Impossible de supprimer le groupe", user.getUserId()));
         return false;
     }
 

@@ -19,6 +19,7 @@ public class User {
     private String userName;
     private Integer nameLength;
     private Integer userId;
+    private String room;
 
     private Message currentMessage;
     private ByteBuffer currentBuffer;
@@ -36,6 +37,7 @@ public class User {
         this.messages = new ArrayBlockingQueue(20);
         this.currentBuffer = ByteBuffer.allocate(0);
         this.writeSelector = selector;
+        this.room = "default";
     }
 
     protected SocketChannel getSocketChannel() {
@@ -54,6 +56,9 @@ public class User {
         return this.userId;
     }
 
+    public ArrayBlockingQueue<Message> getMessages() {
+        return messages;
+    }
 
     public void setUsersMap(UsersList usersMap) {
         this.usersMap = usersMap;
@@ -75,6 +80,7 @@ public class User {
     protected void readMessage() throws IOException {
         //TODO : gérer read() = -1
         if (currentMessage.headerBuf.remaining() != 0) {
+            System.out.println("header buf.remaining != 0");
             channel.read(currentMessage.headerBuf);
             if (currentMessage.headerBuf.remaining() != 0) return;
             currentMessage.setHeader(userId);
@@ -86,6 +92,7 @@ public class User {
             handleMessage(currentMessage);
             clearCurrentMessage();
         }
+        System.out.println("readMessage messages : " + this.getMessages());
     }
 
     protected void readCompleteMessage() throws IOException {
@@ -134,32 +141,46 @@ public class User {
                 break;
             case JOIN:
                 String room = m.getMessage();
-                if (rooms.containsKey(room)) {
-                    this.usersMap.removeClient(this);
-                    rooms.get(room).addUser(this);
-                } else {
-                    addMessageToQueue(new Message(MessageType.ERROR, "Room inexistante", userId));
-                }
+                changeRoom(room);
                 break;
             case CREATE:
                 String newRoom = m.getMessage();
                 if (!rooms.containsKey(newRoom)) {
                     ChatRoom chatRoom = new ChatRoom(newRoom, this);
                     rooms.put(newRoom, chatRoom);
-                    this.usersMap.removeClient(this);
-                    chatRoom.addUser(this);
+                    changeRoom(newRoom);
                 } else {
                     addMessageToQueue(new Message(MessageType.ERROR, "Room déjà existante", userId));
                 }
+                break;
             case DELETE:
-
+                if (rooms.get(this.room).deleteRoom(this))
+                    rooms.remove(this.room);
+                break;
+            case USERLIST:
+                //TODO userlist
+                break;
+            case CHATROOMLIST:
+                //TODO chatroomlist
+                break;
             default:
                 System.err.println("Message non géré : " + m.getMessage());
         }
     }
 
+    protected void changeRoom(String room) {
+        if (rooms.containsKey(room)) {
+            this.usersMap.removeClient(this);
+            rooms.get(room).addUser(this);
+            this.room = room;
+            //TODO : send new users list
+        } else {
+            addMessageToQueue(new Message(MessageType.ERROR, "Room inexistante", userId));
+        }
+    }
+
     private void clearCurrentMessage() {
-        this.currentMessage.clear();
+        this.currentMessage = new Message();
     }
 
     private void broadcastMessage(Message message) {
@@ -173,9 +194,10 @@ public class User {
         //TODO : sendUsersList
     }
 
-    private void addMessageToQueue(Message m) {
+    protected void addMessageToQueue(Message m) {
         try {
             messages.add(m);
+            System.out.println("addMessage messages : " + messages);
             System.out.println("addMessage queue size : " + messages.size());
             System.out.println("addMessages messages.peek() : " + messages.peek());
             SelectionKey key = this.channel.register(this.writeSelector, SelectionKey.OP_WRITE);
@@ -188,6 +210,7 @@ public class User {
             System.err.println("Envoi du message impossible - client déconnecté");
             usersMap.removeClient(this);
         }
+        System.out.println("add messages : " + this.getMessages());
     }
 
     protected void sendMessages() {
@@ -200,7 +223,14 @@ public class User {
         } else {
             System.out.println("sendMessages queue size : " + messages.size());
             System.out.println("sendMessages messages.peek() : " + messages.peek());
-            Message m = messages.remove();
+            System.out.println("sendMessage messages : " + messages);
+            Message m = null;
+            try {
+                m = messages.take();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("sendMessage messages : " + messages);
             if (!m.equals(null)) {
                 try {
                     System.out.println(m.toString());

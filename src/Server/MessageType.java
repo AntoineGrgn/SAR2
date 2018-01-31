@@ -7,7 +7,9 @@ public enum MessageType {
     JOIN(2, "Join room"),
     ERROR(3, "Error"),
     CREATE(4, "Create room"),
-    DELETE(5, "Delete room");
+    DELETE(5, "Delete room"),
+    USERLIST(6, "Get Users List"),
+    CHATROOMLIST(7, "Get chatrooms list");
 
     private int num;
     private String name;

@@ -68,7 +68,7 @@ public class Connexion {
 
     }
 
-    /*public String[] getClientsList() {
-
-    }*/
+    private void handleMessage(Message message) {
+        //TODO : handle message coté client
+    }
 }

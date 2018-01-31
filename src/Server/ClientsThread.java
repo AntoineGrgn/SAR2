@@ -91,6 +91,7 @@ public class ClientsThread implements Runnable {
                 User user = (User) key.attachment();
                 try {
                     user.readMessage();
+                    System.out.println("read user messages : " + user.getMessages());
                 } catch (IOException e) {
                     usersMap.removeClient(user);
                     key.cancel();
