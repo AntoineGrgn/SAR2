@@ -80,7 +80,7 @@ public class User {
     protected void readMessage() throws IOException {
         //TODO : gérer read() = -1
         if (currentMessage.headerBuf.remaining() != 0) {
-            System.out.println("header buf.remaining != 0");
+            //System.out.println("header buf.remaining != 0");
             channel.read(currentMessage.headerBuf);
             if (currentMessage.headerBuf.remaining() != 0) return;
             currentMessage.setHeader(userId);
