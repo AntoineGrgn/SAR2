@@ -1,6 +1,7 @@
 package Server;
 
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -8,7 +9,7 @@ import java.util.Map;
 
 public class Message {
 
-    private String message;
+    private byte[] message; //TODO : longueur maximale de message ?
 
     private MessageType type;
     private Integer idFrom;
@@ -20,24 +21,32 @@ public class Message {
 
 
     public Message(MessageType t, String m, int id) {
-        this.message = m;
+        this.message = m.getBytes(charSet);
         this.idFrom = id;
         this.type = t;
-        this.messageLength = message.length();
+        this.messageLength = message.length;
     }
 
     public Message(UsersList list) {
         this.type = MessageType.USERLIST;
         this.idFrom = 0;
-        String message = new String();
+        int totalLength = 0;
+        int n;
         for (Map.Entry<Integer, User> entry : list.usersMap.entrySet()) {
-            Integer id = entry.getKey();
-            User user = entry.getValue();
-            message += id.toString() + user.getNameLength().toString() + user.getUserName();
-            System.out.println("id : " + id + " length : " + user.getNameLength() + " name : " + user.getUserName());
+            byte[] user = entry.getValue().getUserName().getBytes(charSet);
+            n = Integer.BYTES*2 + user.length;
+            ByteBuffer temp = ByteBuffer.allocate(n);
+            int id = entry.getKey();
+            temp.putInt(id);
+            temp.putInt(user.length);
+            temp.put(user);
+            System.out.println("id : " + id + " length (byte): " + user.length);
+            totalLength += n;
         }
+        ByteBuffer buf = ByteBuffer.allocate(totalLength);
+        byte[] message = buf.array();
         this.message = message;
-        this.messageLength = message.length();
+        this.messageLength = message.length;
     }
 
     public Message() {
@@ -45,7 +54,7 @@ public class Message {
     }
 
     protected String getMessage() {
-        return this.message;
+        return new String(this.message, charSet);
     }
 
     protected int getMessageLength() {
@@ -61,7 +70,7 @@ public class Message {
     }
 
     public void setMessage(ByteBuffer message) {
-        this.message = new String(message.array(), charSet);
+        this.message = message.array();
     }
 
     protected void setHeader(int userId) {
@@ -72,11 +81,11 @@ public class Message {
     }
 
     protected ByteBuffer messageToByteBuffer() {
-        ByteBuffer buf = ByteBuffer.allocate(3*Integer.BYTES + message.length());
+        ByteBuffer buf = ByteBuffer.allocate(3*Integer.BYTES + messageLength);
         buf.put(Utils.intToByteArray(type.toInt()));
         buf.put(Utils.intToByteArray(idFrom));
-        buf.put(Utils.intToByteArray(message.length()));
-        buf.put(message.getBytes(charSet));
+        buf.put(Utils.intToByteArray(messageLength));
+        buf.put(message);
         buf.flip();
         return buf;
     }
