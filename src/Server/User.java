@@ -153,8 +153,8 @@ public class User {
                 }
                 break;
             case DELETE:
-                if (rooms.get(this.room).deleteRoom(this))
-                    rooms.remove(this.room);
+                if (rooms.get(m.getMessage()).deleteRoom(this))
+                    rooms.remove(m.getMessage());
                 break;
             case USERLIST:
                 addMessageToQueue(new Message(this.usersMap));
