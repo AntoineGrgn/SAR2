@@ -172,6 +172,7 @@ public class User {
             this.usersMap.removeClient(this);
             rooms.get(room).addUser(this);
             this.room = room;
+            addMessageToQueue(new Message(MessageType.JOIN, room, 0));
             addMessageToQueue(new Message(this.usersMap));
         } else {
             addMessageToQueue(new Message(MessageType.ERROR, "Room inexistante", userId));
