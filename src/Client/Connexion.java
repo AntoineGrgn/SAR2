@@ -55,6 +55,7 @@ public class Connexion {
 
         ByteBuffer buf= ByteBuffer.allocate(len);
         while (buf.remaining()!=0) this.clientChannel.read(buf);
+        buf.flip();
         String str = new String(buf.array(), charSet);
 
         switch (MessageType.fromInt(type)){
@@ -62,8 +63,10 @@ public class Connexion {
                 System.out.println("[" + id + "]: " + str);
                 break;
             case CHATROOMLIST:
+                System.out.println("Chatroomlist received, longueur " + len + " : " + str);
                 break;
             case USERLIST:
+                System.out.println("Userslist received, longueur " + len + " : " + buf.getInt());
                 break;
         }
         System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);

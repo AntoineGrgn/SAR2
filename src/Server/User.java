@@ -92,7 +92,6 @@ public class User {
             handleMessage(currentMessage);
             clearCurrentMessage();
         }
-        System.out.println("readMessage messages : " + this.getMessages());
     }
 
     protected void readCompleteMessage() throws IOException {

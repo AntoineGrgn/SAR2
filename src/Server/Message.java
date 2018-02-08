@@ -1,10 +1,8 @@
 package Server;
 
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Message {
@@ -28,26 +26,33 @@ public class Message {
     }
 
     public Message(UsersList list) {
+        //Constructeur pour un message de type UserList
         this.type = MessageType.USERLIST;
         this.idFrom = 0;
         int totalLength = 0;
         int n;
+        ByteBuffer temp = ByteBuffer.allocate(1024);
         for (Map.Entry<Integer, User> entry : list.usersMap.entrySet()) {
             byte[] user = entry.getValue().getUserName().getBytes(charSet);
             n = Integer.BYTES*2 + user.length;
-            ByteBuffer temp = ByteBuffer.allocate(n);
+            //ByteBuffer temp = ByteBuffer.allocate(n);
             int id = entry.getKey();
             temp.putInt(id);
             temp.putInt(user.length);
             temp.put(user);
-            System.out.println("id : " + id + " length (byte): " + user.length);
+            System.out.println("Userslist message bytebuffer1 : " + temp);
+            System.out.println("id : " + id + " length (byte): " + user.length + " user : " + new String(user, charSet));
             totalLength += n;
         }
-        ByteBuffer buf = ByteBuffer.allocate(totalLength);
+        temp.flip();
+        ByteBuffer buf = ByteBuffer.allocate(temp.limit());
+        buf.put(temp);
         byte[] message = buf.array();
+        System.out.println("UsersList message from byte[] : " + new String(message, charSet) + " array length : " + message.length);
         this.message = message;
         this.messageLength = message.length;
     }
+
 
     public Message() {
         this.headerBuf = ByteBuffer.allocate(2*Integer.BYTES);
@@ -82,9 +87,9 @@ public class Message {
 
     protected ByteBuffer messageToByteBuffer() {
         ByteBuffer buf = ByteBuffer.allocate(3*Integer.BYTES + messageLength);
-        buf.put(Utils.intToByteArray(type.toInt()));
-        buf.put(Utils.intToByteArray(idFrom));
-        buf.put(Utils.intToByteArray(messageLength));
+        buf.putInt(type.toInt());
+        buf.putInt(idFrom);
+        buf.putInt(messageLength);
         buf.put(message);
         buf.flip();
         return buf;
