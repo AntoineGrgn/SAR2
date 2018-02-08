@@ -149,7 +149,7 @@ public class User {
                     rooms.put(newRoom, chatRoom);
                     changeRoom(newRoom);
                 } else {
-                    addMessageToQueue(new Message(MessageType.ERROR, "Room déjà existante", userId));
+                    addMessageToQueue(new Message(MessageType.ERROR, "Erreur : Room déjà existante", userId));
                 }
                 break;
             case DELETE:
@@ -169,13 +169,15 @@ public class User {
 
     protected void changeRoom(String room) {
         if (rooms.containsKey(room)) {
-            this.usersMap.removeClient(this);
-            rooms.get(room).addUser(this);
+            if (!this.usersMap.equals(null)) this.usersMap.removeClient(this);
+            ChatRoom r = rooms.get(room);
+            r.addUser(this);
             this.room = room;
             addMessageToQueue(new Message(MessageType.JOIN, room, 0));
-            addMessageToQueue(new Message(this.usersMap));
+            r.broadcastUsersList();
+
         } else {
-            addMessageToQueue(new Message(MessageType.ERROR, "Room inexistante", userId));
+            addMessageToQueue(new Message(MessageType.ERROR, "Erreur : Room inexistante", userId));
         }
     }
 

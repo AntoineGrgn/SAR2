@@ -27,6 +27,12 @@ public class ChatRoom {
         user.setUsersMap(usersMap);
     }
 
+    protected void broadcastUsersList() {
+        this.usersMap.usersMap.forEach((Integer k, User v) -> {
+            v.addMessageToQueue(new Message(this.usersMap));
+        });
+    }
+
     protected void removeUser(User user) {
         this.usersMap.removeClient(user);
     }
@@ -41,7 +47,7 @@ public class ChatRoom {
                 return true;
             }
         }
-        user.addMessageToQueue(new Message(MessageType.ERROR, "Impossible de supprimer le groupe", user.getUserId()));
+        user.addMessageToQueue(new Message(MessageType.ERROR, "Erreur : Impossible de supprimer le groupe", user.getUserId()));
         return false;
     }
 
