@@ -160,7 +160,7 @@ public class User {
                 addMessageToQueue(new Message(this.usersMap));
                 break;
             case CHATROOMLIST:
-                //TODO chatroomlist
+                addMessageToQueue(new Message(this.rooms.keySet()));
                 break;
             default:
                 System.err.println("Message non géré : " + m.getMessage());
