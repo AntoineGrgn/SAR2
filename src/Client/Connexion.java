@@ -5,11 +5,13 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 
 public class Connexion {
 
     private Charset charSet = Charset.forName("UTF-8");
     private SocketChannel clientChannel;
+    private HashMap<Integer,String> usersMap = new HashMap<>();
 
     protected Connexion() throws IOException {
 
@@ -54,22 +56,38 @@ public class Connexion {
         int len = bufLen.getInt();
 
         ByteBuffer buf= ByteBuffer.allocate(len);
+        String str;
         while (buf.remaining()!=0) this.clientChannel.read(buf);
         buf.flip();
-        String str = new String(buf.array(), charSet);
 
         switch (MessageType.fromInt(type)){
             case MESSAGE:
+                str = new String(buf.array(), charSet);
                 System.out.println("[" + id + "]: " + str);
                 break;
             case CHATROOMLIST:
-                System.out.println("Chatroomlist received, longueur " + len + " : " + str);
+                System.out.println("Liste des chatrooms disponibles:");
+                while(buf.hasRemaining()){
+                    int nameLen = buf.getInt();
+                    byte[] nameArray = new byte[nameLen];
+                    buf.get(nameArray,0,nameLen);
+                    System.out.println(new String(nameArray, charSet));
+                }
                 break;
             case USERLIST:
-                System.out.println("Userslist received, longueur " + len + " : " + buf.getInt());
+                System.out.println("Liste des utilisateurs dans la chatroom:");
+                while(buf.hasRemaining()){
+                    int userId = buf.getInt();
+                    int nameLen = buf.getInt();
+                    byte[] nameArray = new byte[nameLen];
+                    buf.get(nameArray,0,nameLen);
+                    String userName = new String(nameArray, charSet);
+                    System.out.println(userName);
+                    usersMap.put(userId,userName);
+                }
                 break;
         }
-        System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);
+        //System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);
 
 
 //        switch (type) {
