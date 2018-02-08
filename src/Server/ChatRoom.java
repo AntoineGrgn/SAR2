@@ -1,5 +1,6 @@
 package Server;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ChatRoom {
@@ -45,18 +46,20 @@ public class ChatRoom {
 
                 //Problème d'accès concurrent
 
-                for (Map.Entry<Integer, User> entry : this.usersMap.usersMap.entrySet()) {
-                    User v = entry.getValue();
-                    v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
-                    v.changeRoom("default");
-                }
-
-//                this.usersMap.usersMap.forEach((Integer k, User v) -> {
-//                    v.changeRoom("default");
-//                });
-//                this.usersMap.usersMap.forEach((Integer k, User v) -> {
+//                for (Map.Entry<Integer, User> entry : this.usersMap.usersMap.entrySet()) {
+//                    User v = entry.getValue();
 //                    v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
+//                    v.changeRoom("default");
+//                }
+
+                HashMap<Integer, User> copy = new HashMap<Integer, User>(this.usersMap.usersMap);
+                copy.forEach((Integer k, User v) -> {
+//              this.usersMap.usersMap.forEach((Integer k, User v) -> {
+                    v.changeRoom("default");
 //                });
+//                this.usersMap.usersMap.forEach((Integer k, User v) -> {
+                    v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
+                });
                 return true;
             }
         }
