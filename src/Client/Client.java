@@ -26,8 +26,8 @@ public class Client {
         Thread receiverThread = new Thread(receiver);
         receiverThread.start();
 
-        System.out.println("Vous êtes dans la chatroom par défaut");
         System.out.println("Tapez !help pour afficher les commandes disponibles");
+        System.out.println("Vous êtes dans la chatroom par défaut");
 
         connexion.sendMessage(new Message(MessageType.PSEUDO, pseudo));
 
