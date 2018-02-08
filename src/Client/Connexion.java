@@ -63,7 +63,7 @@ public class Connexion {
         switch (MessageType.fromInt(type)){
             case MESSAGE:
                 str = new String(buf.array(), charSet);
-                System.out.println("[" + id + "]: " + str);
+                System.out.println("" + usersMap.get(id) + ": " + str);
                 break;
             case CHATROOMLIST:
                 System.out.println("Liste des chatrooms disponibles:");
@@ -86,13 +86,16 @@ public class Connexion {
                     usersMap.put(userId,userName);
                 }
                 break;
+            case ERROR:
+                str = new String(buf.array(), charSet);
+                System.out.println(str);
+                break;
+            case JOIN:
+                str = new String(buf.array(), charSet);
+                System.out.println("Vous avez rejoint la chatroom " + str);
+                break;
         }
-        //System.out.println("Message received : " + MessageType.fromInt(type) + " from " + id + ", longueur " + len + " : " + str);
 
-
-//        switch (type) {
-//            case
-//        }
         //handleMessage(new Message(MessageType.fromInt(type), ))
 
     }
