@@ -37,7 +37,7 @@ public class User {
         this.messages = new ArrayBlockingQueue(20);
         this.currentBuffer = ByteBuffer.allocate(0);
         this.writeSelector = selector;
-        this.room = "default";
+//        this.room = "default";
     }
 
     protected SocketChannel getSocketChannel() {
@@ -136,7 +136,7 @@ public class User {
             case PSEUDO:
                 User user = usersMap.getUser(m.getIdFrom());
                 user.setUserName(m.getMessage());
-                sendUsersList(user);
+                this.rooms.get("default").broadcastUsersList();
                 break;
             case JOIN:
                 String room = m.getMessage();
@@ -190,10 +190,6 @@ public class User {
             v.addMessageToQueue(message);
             System.out.println(message.toString());
         });
-    }
-
-    private void sendUsersList(User user) {
-        //TODO : sendUsersList
     }
 
     protected void addMessageToQueue(Message m) {

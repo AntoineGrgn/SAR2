@@ -1,5 +1,7 @@
 package Server;
 
+import java.util.Map;
+
 public class ChatRoom {
 
     private String name;
@@ -40,10 +42,21 @@ public class ChatRoom {
     protected boolean deleteRoom(User user) {
         if (this.owner != null) {
             if (this.owner.equals(user)) {
-                this.usersMap.usersMap.forEach((Integer k, User v) -> {
+
+                //Problème d'accès concurrent
+
+                for (Map.Entry<Integer, User> entry : this.usersMap.usersMap.entrySet()) {
+                    User v = entry.getValue();
                     v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
                     v.changeRoom("default");
-                });
+                }
+
+//                this.usersMap.usersMap.forEach((Integer k, User v) -> {
+//                    v.changeRoom("default");
+//                });
+//                this.usersMap.usersMap.forEach((Integer k, User v) -> {
+//                    v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
+//                });
                 return true;
             }
         }

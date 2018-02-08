@@ -10,12 +10,6 @@ public class Client {
         Scanner scan = new Scanner(System.in);
         boolean boucle = true;
 
-        Connexion connexion = new Connexion();
-        connexion.connectServer();
-
-        Receiver receiver = new Receiver(connexion);
-        Thread receiverThread = new Thread(receiver);
-        receiverThread.start();
 
         System.out.print("Choisissez votre pseudo : ");
         String pseudo = scan.nextLine();
@@ -24,8 +18,17 @@ public class Client {
             pseudo = scan.nextLine();
         }
         System.out.println("Votre pseudo est: " + pseudo);
+        Connexion connexion = new Connexion();
+
+        connexion.connectServer();
+
+        Receiver receiver = new Receiver(connexion);
+        Thread receiverThread = new Thread(receiver);
+        receiverThread.start();
+
         System.out.println("Vous êtes dans la chatroom par défaut");
         System.out.println("Tapez !help pour afficher les commandes disponibles");
+
         connexion.sendMessage(new Message(MessageType.PSEUDO, pseudo));
 
         while (true) {

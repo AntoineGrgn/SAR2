@@ -73,6 +73,8 @@ public class ClientsThread implements Runnable {
             SelectionKey key = newUser.getSocketChannel().register(this.readSelector, SelectionKey.OP_READ);
             key.attach(newUser);
 
+//            newUser.changeRoom("default");
+
             newUser = this.connexionQueue.poll();
 
         }
