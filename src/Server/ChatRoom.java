@@ -1,7 +1,6 @@
 package Server;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class ChatRoom {
 
@@ -9,18 +8,18 @@ public class ChatRoom {
     private UsersList usersMap;
     private User owner = null;
 
-    public ChatRoom(String name) {
+    ChatRoom(String name) {
         this.name = name;
         this.usersMap = new UsersList();
     }
 
-    public ChatRoom(String name, User user) {
+    ChatRoom(String name, User user) {
         this.name = name;
         this.owner = user;
         this.usersMap = new UsersList();
     }
 
-    public ChatRoom(String def, UsersList usersMap) {
+    ChatRoom(String def, UsersList usersMap) {
         this.name = def;
         this.usersMap = usersMap;
     }
@@ -36,21 +35,17 @@ public class ChatRoom {
         });
     }
 
-    protected void removeUser(User user) {
-        this.usersMap.removeClient(user);
-    }
-
     protected boolean deleteRoom(User user) {
         if (this.owner != null) {
             if (this.owner.equals(user)) {
 
-                HashMap<Integer, User> copy = new HashMap<Integer, User>(this.usersMap.usersMap);
-                copy.forEach((Integer k, User v) -> {
-                    v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId()));
-                });
-                copy.forEach((Integer k, User v) -> {
-                    v.changeRoom("default");
-                });
+                HashMap<Integer, User> copy = new HashMap<>(this.usersMap.usersMap);
+                //Utilisation d'une copie de la usersMap pour éviter un problème d'accès concurrents
+                copy.forEach((Integer k, User v) ->
+                        v.addMessageToQueue(new Message(MessageType.ERROR, "Chatroom supprimée", user.getUserId())));
+                copy.forEach((Integer k, User v) ->
+                        v.changeRoom("default"));
+                //Utilisation de 2 boucles pour avoir les messages dans le bon ordre à l'affichage
                 return true;
             }
         }

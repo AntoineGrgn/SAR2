@@ -1,6 +1,5 @@
 package Client;
 
-
 public enum MessageType {
 
     MESSAGE(0, "Message"),
@@ -10,7 +9,7 @@ public enum MessageType {
     CREATE(4, "Create Room"),
     DELETE(5, "Delete Room"),
     USERLIST(6, "Get Users List"),
-    CHATROOMLIST(7, "Get chatrooms list"); //TODO
+    CHATROOMLIST(7, "Get chatrooms list");
 
     private int num;
     private String name;
@@ -22,10 +21,6 @@ public enum MessageType {
 
     public String toString() {
         return name;
-    }
-
-    protected String serialize() {
-        return Integer.toString(num);
     }
 
     protected int getNum() {

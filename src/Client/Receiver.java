@@ -6,7 +6,7 @@ public class Receiver implements Runnable {
 
     private Connexion connexion;
 
-    public Receiver(Connexion conn) {
+    Receiver(Connexion conn) {
         this.connexion = conn;
     }
 

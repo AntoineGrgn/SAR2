@@ -19,15 +19,17 @@ public class Message {
     private Charset charSet = Charset.forName("UTF-8");
 
 
-    public Message(MessageType t, String m, int id) {
+    Message(MessageType t, String m, int id) {
+        //Constructeur générique pour transmettre une String
         this.message = m.getBytes(charSet);
         this.idFrom = id;
         this.type = t;
         this.messageLength = message.length;
     }
 
-    public Message(UsersList list) {
+    Message(UsersList list) {
         //Constructeur pour un message de type UserList
+        //Rempli la payload avec la liste des utilisateurs au format <id (int)><nameLength (int)><name (utf8)>
         this.type = MessageType.USERLIST;
         this.idFrom = 0;
         ByteBuffer temp = ByteBuffer.allocate(1024); //TODO : limitation au nombre de personnes dans une chatroom ?
@@ -37,19 +39,18 @@ public class Message {
             temp.putInt(id);
             temp.putInt(user.length);
             temp.put(user);
-            System.out.println("Userslist message bytebuffer1 : " + temp);
-            System.out.println("id : " + id + " length (byte): " + user.length + " user : " + new String(user, charSet));
         }
         temp.flip();
         ByteBuffer buf = ByteBuffer.allocate(temp.limit());
         buf.put(temp);
         byte[] message = buf.array();
-        System.out.println("UsersList message from byte[] : " + new String(message, charSet) + " array length : " + message.length);
         this.message = message;
         this.messageLength = message.length;
     }
 
-    public Message(Set<String> rooms) {
+    Message(Set<String> rooms) {
+        //Constructeur pour un message de type RoomsList
+        //Rempli la payload avec la liste des rooms au format <nameLength (int)><name (utf8)>
         this.type = MessageType.CHATROOMLIST;
         this.idFrom = 0;
         ByteBuffer temp = ByteBuffer.allocate(1024); //Comme pour la liste d'utilisateurs, ça limite la quantité de données que l'on peut envoyer
@@ -62,12 +63,11 @@ public class Message {
         ByteBuffer buf = ByteBuffer.allocate(temp.limit());
         buf.put(temp);
         byte[] message = buf.array();
-        System.out.println("ChatroomList message from byte[] : " + new String(message, charSet));
         this.message = message;
         this.messageLength = message.length;
     }
 
-    public Message() {
+    Message() {
         this.headerBuf = ByteBuffer.allocate(2*Integer.BYTES);
     }
 
@@ -92,6 +92,7 @@ public class Message {
     }
 
     protected void setHeader(int userId) {
+        //A la reception d'un message, récupère le type, la longueur de la payload et l'id de l'expéditeur dans l'entête
         headerBuf.flip();
         this.type = MessageType.fromInt(headerBuf.getInt());
         this.messageLength = headerBuf.getInt();
@@ -99,6 +100,8 @@ public class Message {
     }
 
     protected ByteBuffer messageToByteBuffer() {
+        //Construit le buffer contenant le message complet
+        //Format <type (int)><idFrom (int)><messageLength (int)><message (parsing selon le type)>
         ByteBuffer buf = ByteBuffer.allocate(3*Integer.BYTES + messageLength);
         buf.putInt(type.toInt());
         buf.putInt(idFrom);
@@ -106,14 +109,6 @@ public class Message {
         buf.put(message);
         buf.flip();
         return buf;
-    }
-
-    protected void clear() {
-        this.message = null;
-        this.type = null;
-        this.idFrom = null;
-
-        this.headerBuf = ByteBuffer.allocate(2*Integer.BYTES);
     }
 
     @Override

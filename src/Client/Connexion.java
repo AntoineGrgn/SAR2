@@ -13,10 +13,9 @@ public class Connexion {
     private SocketChannel clientChannel;
     private HashMap<Integer,String> usersMap = new HashMap<>();
 
-    protected Connexion() throws IOException {
+    Connexion() throws IOException {
 
         clientChannel = SocketChannel.open();
-        //clientChannel.configureBlocking(false);
     }
 
     protected void connectServer() throws IOException {
@@ -31,7 +30,6 @@ public class Connexion {
     }
 
     protected void sendMessage(Message message) throws IOException {
-        //Ajouter des tags à chaque message pour identifier son type
         ByteBuffer buf = message.serializeToByteBuffer();
         while (buf.hasRemaining()) {
             clientChannel.write(buf);
@@ -39,25 +37,26 @@ public class Connexion {
     }
 
     protected void receiveMessages() throws IOException {
-        //System.out.println("Receiving message");
+        //Format <type (int)><idFrom (int)><messageLength (int)><message (parsing selon le type)>
+
         ByteBuffer bufType = ByteBuffer.allocate(Integer.BYTES);
-        while (bufType.remaining()!=0) this.clientChannel.read(bufType);
+        while (bufType.hasRemaining()) this.clientChannel.read(bufType);
         bufType.flip();
         int type = bufType.getInt();
 
         ByteBuffer bufId = ByteBuffer.allocate(Integer.BYTES);
-        while (bufId.remaining()!=0) this.clientChannel.read(bufId);
+        while (bufId.hasRemaining()) this.clientChannel.read(bufId);
         bufId.flip();
         int id = bufId.getInt();
 
         ByteBuffer bufLen= ByteBuffer.allocate(Integer.BYTES);
-        while (bufLen.remaining()!=0) this.clientChannel.read(bufLen);
+        while (bufLen.hasRemaining()) this.clientChannel.read(bufLen);
         bufLen.flip();
         int len = bufLen.getInt();
 
         ByteBuffer buf= ByteBuffer.allocate(len);
         String str;
-        while (buf.remaining()!=0) this.clientChannel.read(buf);
+        while (buf.hasRemaining()) this.clientChannel.read(buf);
         buf.flip();
 
         switch (MessageType.fromInt(type)){
@@ -66,6 +65,7 @@ public class Connexion {
                 System.out.println("" + usersMap.get(id) + ": " + str);
                 break;
             case CHATROOMLIST:
+                //Liste des rooms au format <nameLength (int)><name (utf8)>
                 System.out.println("Liste des chatrooms disponibles:");
                 while(buf.hasRemaining()){
                     int nameLen = buf.getInt();
@@ -75,6 +75,7 @@ public class Connexion {
                 }
                 break;
             case USERLIST:
+                //Liste des utilisateurs au format <id (int)><nameLength (int)><name (utf8)>
                 System.out.println("Liste des utilisateurs dans la chatroom:");
                 while(buf.hasRemaining()){
                     int userId = buf.getInt();
@@ -95,17 +96,5 @@ public class Connexion {
                 System.out.println("Vous avez rejoint la chatroom " + str);
                 break;
         }
-
-        //handleMessage(new Message(MessageType.fromInt(type), ))
-
-    }
-
-    protected void disconnectServer() throws IOException {
-        clientChannel.close();
-
-    }
-
-    private void handleMessage(Message message) {
-        //TODO : handle message coté client
     }
 }

@@ -9,10 +9,8 @@ import java.util.Set;
 public class Sender implements Runnable {
 
     private Selector writeSelector;
-    private UsersList usersMap;
 
-    public Sender(UsersList usersMap, Selector writeSelector) {
-        this.usersMap = usersMap;
+    Sender(Selector writeSelector) {
         this.writeSelector = writeSelector;
     }
 
@@ -39,7 +37,6 @@ public class Sender implements Runnable {
             Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
 
             while(keyIterator.hasNext()) {
-                System.out.println("boucle while sender");
                 SelectionKey key = keyIterator.next();
                 User user = (User) key.attachment();
                 user.sendMessages();

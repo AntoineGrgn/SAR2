@@ -8,8 +8,6 @@ public class Client {
     public static void main(String args[]) throws Exception {
 
         Scanner scan = new Scanner(System.in);
-        boolean boucle = true;
-
 
         System.out.print("Choisissez votre pseudo : ");
         String pseudo = scan.nextLine();
@@ -22,6 +20,7 @@ public class Client {
 
         connexion.connectServer();
 
+        //Interface ligne de commande sur un autre thread
         Receiver receiver = new Receiver(connexion);
         Thread receiverThread = new Thread(receiver);
         receiverThread.start();
@@ -36,11 +35,11 @@ public class Client {
                 String input = scan.nextLine();
                 if (Objects.equals(input, "!help")) {
                     System.out.println("Liste des commandes disponibles");
+                    System.out.println("!listRooms : liste les chatrooms existantes");
+                    System.out.println("!listUsers : liste les utilisateurs présents dans la chatroom");
                     System.out.println("!join <nom> : rejoindre la chatroom nom");
                     System.out.println("!create <nom> : crérer la chatroom nom");
                     System.out.println("!delete <nom> : supprime la chatroom nom (si vous l'avez créée)");
-                    System.out.println("!listRooms : liste les chatrooms existantes");
-                    System.out.println("!listUsers : liste les utilisateurs présents dans la chatroom");
                 }
                 else if (input.startsWith("!join")) {
                     if(input.substring(5).length()>0){

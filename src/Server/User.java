@@ -17,27 +17,25 @@ public class User {
     private SocketChannel channel;
     private Selector writeSelector;
     private String userName;
-    private Integer nameLength;
     private Integer userId;
     private String room;
 
-    private Message currentMessage;
-    private ByteBuffer currentBuffer;
+    private Message currentMessage; //Stocke un message en cours de lecture
+    private ByteBuffer currentBuffer; //Stocke un message en cours d'écriture
 
-    private UsersList usersMap;
-    private Map<String, ChatRoom> rooms;
+    private UsersList usersMap; //Stocke les autres utilisateurs de la chatroom
+    private Map<String, ChatRoom> rooms; //Stocke la liste des chatrooms
 
     private Charset charSet = Charset.forName("UTF-8");
 
 
 
-    protected User(SocketChannel chan, Selector selector) {
+    User(SocketChannel chan, Selector selector) {
         this.channel = chan;
         this.currentMessage = new Message();
         this.messages = new ArrayBlockingQueue(20);
         this.currentBuffer = ByteBuffer.allocate(0);
         this.writeSelector = selector;
-//        this.room = "default";
     }
 
     protected SocketChannel getSocketChannel() {
@@ -48,16 +46,8 @@ public class User {
         return userName;
     }
 
-    protected Integer getNameLength() {
-        return nameLength;
-    }
-
     protected Integer getUserId() {
         return this.userId;
-    }
-
-    public ArrayBlockingQueue<Message> getMessages() {
-        return messages;
     }
 
     public void setUsersMap(UsersList usersMap) {
@@ -70,7 +60,6 @@ public class User {
 
     private void setUserName(String user) {
         this.userName = user;
-        this.nameLength = user.length();
     }
 
     protected void setRooms(Map<String, ChatRoom> rooms) {
@@ -78,16 +67,22 @@ public class User {
     }
 
     protected void readMessage() throws IOException {
+        //Format lecture :  <type (int)><messageLength (int)><message (parsing selon le type)>
+
         //TODO : gérer read() = -1
-        if (currentMessage.headerBuf.remaining() != 0) {
-            //System.out.println("header buf.remaining != 0");
+        if (currentMessage.headerBuf.hasRemaining()) {
+            //Si le header du message en cours de lecture n'est pas complet, on continue de lire le header
             channel.read(currentMessage.headerBuf);
-            if (currentMessage.headerBuf.remaining() != 0) return;
+            if (currentMessage.headerBuf.hasRemaining()) return;
+            //Si le header est complet, mise en forme du message, allocation du buffer pour la lecture de la payload
+            //La longueur de la payload est contenue dans l'entête
             currentMessage.setHeader(userId);
             currentMessage.messageBuf = ByteBuffer.allocate(currentMessage.getMessageLength());
         }
         channel.read(currentMessage.messageBuf);
-        if (currentMessage.messageBuf.remaining() == 0) {
+        //lecture de la payload
+        if (!currentMessage.messageBuf.hasRemaining()) {
+            //Une fois que le message est complet, gestion du message
             currentMessage.setMessage(currentMessage.messageBuf);
             handleMessage(currentMessage);
             clearCurrentMessage();
@@ -96,6 +91,7 @@ public class User {
 
     protected void readCompleteMessage() throws IOException {
         /**
+         *** Deprecated ***
          * Reads a complete message at once
          * Shouldn't be used - use readMessage instead
          */
@@ -106,37 +102,31 @@ public class User {
         bufType.flip();
         int type = bufType.getInt();
 
-        System.out.println("type " + type);
-
         ByteBuffer bufLen = ByteBuffer.allocate(Integer.BYTES);
         channel.read(bufLen);
         bufLen.flip();
         int len = bufLen.getInt();
 
-        System.out.println("len " + len);
-
         ByteBuffer buf = ByteBuffer.allocate(len);
         channel.read(buf);
         String str = new String(buf.array(), charSet);
-
-        System.out.println("str" + str);
 
         handleMessage(new Message(MessageType.fromInt(type), str, userId));
 
     }
 
-    private void handleMessage(Message m) throws IOException {
+    private void handleMessage(Message m) {
 
         MessageType t = m.getType();
         switch (t) {
             case MESSAGE:
-                System.out.println("Message reçu, broadcasting");
                 broadcastMessage(m);
                 break;
             case PSEUDO:
+                //Message reçu seulement au début de la connexion
                 User user = usersMap.getUser(m.getIdFrom());
                 user.setUserName(m.getMessage());
-                this.rooms.get("default").broadcastUsersList();
+                this.rooms.get("default").broadcastUsersList(); //on lui envoie la liste des utilisateurs dans la room default à laquelle il vient de se connecter
                 break;
             case JOIN:
                 String room = m.getMessage();
@@ -153,6 +143,7 @@ public class User {
                 }
                 break;
             case DELETE:
+                //deleteRoom mets les utilisateurs actuels de la room dans la room default
                 if (rooms.get(m.getMessage()).deleteRoom(this))
                     rooms.remove(m.getMessage());
                 break;
@@ -163,13 +154,16 @@ public class User {
                 addMessageToQueue(new Message(this.rooms.keySet()));
                 break;
             default:
-                System.err.println("Message non géré : " + m.getMessage());
+                System.err.println("Type de message non géré : " + t);
         }
     }
 
     protected void changeRoom(String room) {
         if (rooms.containsKey(room)) {
-            if (!this.usersMap.equals(null)) this.usersMap.removeClient(this);
+            if (!this.usersMap.equals(null))
+                //A l'initialisation de la connexion, utilisation de changeRoom pour mettre l'utilisateur dans default, mais le user n'avait pas encore de usersMap
+                //Sinon, on le retire de la liste d'utilisateurs précédente
+                this.usersMap.removeClient(this);
             ChatRoom r = rooms.get(room);
             r.addUser(this);
             this.room = room;
@@ -182,24 +176,21 @@ public class User {
     }
 
     private void clearCurrentMessage() {
+        //Clear le message en cours de reception
         this.currentMessage = new Message();
     }
 
     private void broadcastMessage(Message message) {
-        this.usersMap.usersMap.forEach((Integer k, User v) -> {
-            v.addMessageToQueue(message);
-            System.out.println(message.toString());
-        });
+        System.out.println("Broadcasting message");
+        this.usersMap.usersMap.forEach((Integer k, User v) -> v.addMessageToQueue(message));
     }
 
     protected void addMessageToQueue(Message m) {
         try {
             messages.add(m);
-            System.out.println("addMessage messages : " + messages);
-            System.out.println("addMessage queue size : " + messages.size());
+            System.out.println("ajout d'un message à la queue de " + this.userId + " : " + messages + ", queue size:" + this.messages.size());
             SelectionKey key = this.channel.register(this.writeSelector, SelectionKey.OP_WRITE);
             key.attach(this);
-            System.out.println("write selector registered");
         } catch (IllegalStateException e) {
             System.err.println("File d'attente saturée - Message non traité");
             //TODO : informer le client ?
@@ -211,14 +202,13 @@ public class User {
 
     protected void sendMessages() {
         if (currentBuffer.hasRemaining()) {
+            //Si un message était en cours d'envoi, envoi de la fin
             try {
                 sendRemaining();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("sendMessages queue size : " + messages.size());
-            System.out.println("sendMessage messages : " + messages);
             Message m = null;
             try {
                 m = messages.take();
@@ -236,24 +226,26 @@ public class User {
                 System.err.println("Appel de sendMessage sur une file vide");
             }
             if (messages.isEmpty()) {
-                System.out.println("removing selector");
+                //S'il n'y a plus de messages dans la queue, on retire le selecteur d'écriture
                 channel.keyFor(writeSelector).cancel();
             }
         }
     }
 
     private void sendRemaining() throws IOException {
-        System.out.println("has remaining");
+        //Reprise de l'envoi d'un message
+        System.out.println("Envoi restant du message");
         channel.write(currentBuffer);
     }
 
     private void sendMessage(Message message) throws IOException {
         //TODO : write
-        System.out.println("début send Message");
         ByteBuffer buf = message.messageToByteBuffer();
-        System.out.println("send message : " + buf.toString());
+        System.out.println("Envoi du message à " + this.userId + " : " + message.toString() + ", messages restant dans la queue : " + messages.size());
         channel.write(buf);
-        if (buf.hasRemaining()) this.currentBuffer = buf;
+        if (buf.hasRemaining())
+            //Si tout le message n'est pas envoyé en une fois
+            this.currentBuffer = buf;
     }
 
     @Override

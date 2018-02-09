@@ -2,13 +2,9 @@ package Server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -18,42 +14,38 @@ import java.util.concurrent.BlockingQueue;
 public class Server {
 
     private int port = 3333;
-    private BlockingQueue<User> connexionQueue;
-    private ClientsThread clientsManager;
-    private Sender sender;
-    private ServerSocketChannel serverSocketChannel;
-    private Selector writeSelector;
 
     public void initiate() throws IOException {
 
         //Nombre de connexions en attente possible
-        connexionQueue = new ArrayBlockingQueue(10);
+        BlockingQueue<User> connexionQueue = new ArrayBlockingQueue(10);
 
 
-        this.serverSocketChannel = ServerSocketChannel.open();
-        this.serverSocketChannel.socket().bind(new InetSocketAddress(port));
-        this.serverSocketChannel.configureBlocking(false);
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.socket().bind(new InetSocketAddress(port));
+        serverSocketChannel.configureBlocking(false);
 
-        writeSelector = Selector.open();
+        Selector writeSelector = Selector.open();
 
         UsersList usersMap = new UsersList();
-        this.clientsManager = new ClientsThread(connexionQueue, usersMap);
-        this.sender = new Sender(usersMap, writeSelector);
-        Thread senderThread = new Thread(this.sender);
-        Thread clientsThread = new Thread(this.clientsManager);
-        senderThread.start();
-        clientsThread.start();
+        ClientsThread clientsManager = new ClientsThread(connexionQueue, usersMap);
+        Sender sender = new Sender(writeSelector);
+        Thread senderThread = new Thread(sender);
+        Thread clientsThread = new Thread(clientsManager);
+        senderThread.start(); //Thread gérant l'envoi des messages sur les sockets (selecteur write)
+        clientsThread.start(); //Thread gérant les connexions et la réception des messages (selecteur read)
 
         while (true) {
 
             SocketChannel clientChannel = null;
             try {
-                clientChannel = this.serverSocketChannel.accept();
+                clientChannel = serverSocketChannel.accept();
             } catch (IllegalStateException e) {
-                System.err.println("Serveur saturé - Réessayer ultérieurement");
+                System.err.println("Serveur saturé - Refus d'une connexion");
             }
             if (clientChannel != null) {
-                this.connexionQueue.add(new User(clientChannel, writeSelector));
+                //Réceptionne les demandes de connexion et les transmet au thread ClientThread
+                connexionQueue.add(new User(clientChannel, writeSelector));
             }
         }
 

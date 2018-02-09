@@ -19,13 +19,11 @@ public class ClientsThread implements Runnable {
     private Selector readSelector;
 
     private Map<String, ChatRoom> rooms;
-    private UsersList usersMap = null;
+    private UsersList usersMap;
     private Integer userId = 1;
 
-    private Charset charSet = Charset.forName("UTF-8");
 
-
-    public ClientsThread(BlockingQueue<User> queue, UsersList usersMap) throws IOException {
+    ClientsThread(BlockingQueue<User> queue, UsersList usersMap) throws IOException {
         this.connexionQueue = queue;
         this.readSelector = Selector.open();
         this.rooms = new HashMap<>();
@@ -73,15 +71,13 @@ public class ClientsThread implements Runnable {
             SelectionKey key = newUser.getSocketChannel().register(this.readSelector, SelectionKey.OP_READ);
             key.attach(newUser);
 
-//            newUser.changeRoom("default");
-
             newUser = this.connexionQueue.poll();
 
         }
     }
 
     private void readUsersMessages() throws IOException {
-
+        //Vérification de présence de messages à lire
         int messages = this.readSelector.selectNow();
 
         if (messages > 0) {
@@ -92,12 +88,12 @@ public class ClientsThread implements Runnable {
                 SelectionKey key = keyIterator.next();
                 User user = (User) key.attachment();
                 try {
+                    //Lecture des messages en attente pour cet utilisateur
                     user.readMessage();
-                    //System.out.println("read user messages : " + user.getMessages());
                 } catch (IOException e) {
                     usersMap.removeClient(user);
                     key.cancel();
-                    //e.printStackTrace();
+                    e.printStackTrace();
                 }
 
 

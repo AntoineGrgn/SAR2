@@ -23,10 +23,6 @@ public enum MessageType {
         return name;
     }
 
-    protected String serialize() {
-        return Integer.toString(num);
-    }
-
     protected static MessageType fromInt(int i) {
         for (MessageType m : MessageType.values()) {
             if (m.num == i) {
